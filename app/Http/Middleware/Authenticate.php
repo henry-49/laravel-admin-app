@@ -1,0 +1,36 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Closure;
+use Illuminate\Auth\Middleware\Authenticate as Middleware;
+
+class Authenticate extends Middleware
+{
+    /**
+     * Get the path the user should be redirected to when they are not authenticated.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return string|null
+     */
+    protected function redirectTo($request)
+    {
+        if (!$request->expectsJson()) {
+            return route('login');
+        }
+    }
+
+
+    // overide the request
+    // this ensure secure authentication with httpOnly cookies
+    public function handle($request, Closure $next, ...$guards)
+    {
+        // manually add the jwt into every headers
+       if ($jwt = $request->cookie('jwt')){
+           $request->headers->set('Authorization', 'Bearer ' . $jwt);
+       }
+        $this->authenticate($request, $guards);
+
+        return $next($request);
+    }
+}
